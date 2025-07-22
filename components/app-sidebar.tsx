@@ -5,7 +5,7 @@ import {
   Briefcase,
   Building2,
   DollarSign,
-  Home,
+  LayoutDashboardIcon,
   MessageSquare,
   Settings,
   Star,
@@ -33,8 +33,8 @@ import {
 const navigationItems = [
   {
     title: "Dashboard",
-    url: "/",
-    icon: Home,
+    url: "/dashboard",
+    icon: LayoutDashboardIcon,
   },
   {
     title: "Users",
@@ -43,7 +43,7 @@ const navigationItems = [
   },
   {
     title: "Salary Insights",
-    url: "/salary-insights",
+    url: "/insights",
     icon: DollarSign,
   },
   {
@@ -98,7 +98,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">
-                    JobPortal Admin
+                    Trucareer Admin
                   </span>
                   <span className="truncate text-xs">Dashboard</span>
                 </div>

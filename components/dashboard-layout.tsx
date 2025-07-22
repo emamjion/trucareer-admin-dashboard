@@ -33,7 +33,7 @@ interface DashboardLayoutProps {
 const routeLabels: Record<string, string> = {
   "/": "Dashboard",
   "/users": "Users",
-  "/salary-insights": "Salary Insights",
+  "/insights": "Salary Insights",
   "/companies": "Companies",
   "/reviews": "Reviews",
   "/jobs": "Job Postings",

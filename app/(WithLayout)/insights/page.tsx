@@ -57,6 +57,7 @@ import {
 } from "recharts";
 import { SalaryEntryDialog } from "./components/SalaryEntryDialog";
 
+
 const dummyData = [
   {
     id: 1,
