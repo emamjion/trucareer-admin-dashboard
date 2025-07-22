@@ -7,10 +7,10 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Admin Dashboard - JobPortal",
+  title: "Admin Dashboard - Trucareer",
   description:
     "Admin dashboard for managing users, companies, jobs, and reviews",
-  generator: "v0.dev",
+  generator: "Emam Jion",
 };
 
 export default function RootLayout({
