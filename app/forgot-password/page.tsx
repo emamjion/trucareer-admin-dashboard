@@ -95,7 +95,7 @@ export default function ForgotPasswordPage() {
 
               <div className="space-y-2">
                 <Button asChild className="w-full" size="lg">
-                  <Link href="/login">
+                  <Link href="/">
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Back to Login
                   </Link>
