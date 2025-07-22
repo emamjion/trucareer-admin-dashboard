@@ -1,10 +1,21 @@
-"use client"
+"use client";
 
-import type * as React from "react"
-import { BarChart3, Building2, DollarSign, Home, MessageSquare, Settings, Star, Users, Briefcase } from "lucide-react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+import {
+  BarChart3,
+  Briefcase,
+  Building2,
+  DollarSign,
+  Home,
+  MessageSquare,
+  Settings,
+  Star,
+  Users,
+} from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import type * as React from "react";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Sidebar,
   SidebarContent,
@@ -17,8 +28,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-} from "@/components/ui/sidebar"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+} from "@/components/ui/sidebar";
 
 const navigationItems = [
   {
@@ -30,6 +40,11 @@ const navigationItems = [
     title: "Users",
     url: "/users",
     icon: Users,
+  },
+  {
+    title: "Salary Insights",
+    url: "/salary-insights",
+    icon: DollarSign,
   },
   {
     title: "Companies",
@@ -66,10 +81,10 @@ const navigationItems = [
     url: "/settings",
     icon: Settings,
   },
-]
+];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const pathname = usePathname()
+  const pathname = usePathname();
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -82,7 +97,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <Building2 className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">JobPortal Admin</span>
+                  <span className="truncate font-semibold">
+                    JobPortal Admin
+                  </span>
                   <span className="truncate text-xs">Dashboard</span>
                 </div>
               </Link>
@@ -97,7 +114,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenu>
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={pathname === item.url} tooltip={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname === item.url}
+                    tooltip={item.title}
+                  >
                     <Link href={item.url}>
                       <item.icon />
                       <span>{item.title}</span>
@@ -115,7 +136,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuButton size="lg" asChild tooltip="Admin User">
               <div className="flex items-center gap-2">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src="/placeholder.svg?height=32&width=32" alt="Admin" />
+                  <AvatarImage
+                    src="/placeholder.svg?height=32&width=32"
+                    alt="Admin"
+                  />
                   <AvatarFallback className="rounded-lg">AD</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
@@ -129,5 +153,5 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
-  )
+  );
 }
