@@ -26,6 +26,8 @@ import { getUserInfo } from "@/services/auth.services";
 import { LogOut, Moon, Settings, Sun, User } from "lucide-react";
 import { useTheme } from "next-themes";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
+import { ProfileDialog } from "./ProfileDialog";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -48,6 +50,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { setTheme, theme } = useTheme();
   const pathname = usePathname();
   const currentPage = routeLabels[pathname] || "Dashboard";
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
 
   const userInfo = getUserInfo();
 
@@ -86,7 +89,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                 <Avatar className="h-8 w-8">
                   <AvatarImage
-                    src="/placeholder.svg?height=32&width=32"
+                    src={
+                      userInfo?.profileImg ||
+                      "/placeholder.svg?height=32&width=32"
+                    }
                     alt="Admin"
                   />
                   <AvatarFallback>AD</AvatarFallback>
@@ -105,7 +111,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => setProfileDialogOpen(true)}
+              >
                 <User className="mr-2 h-4 w-4" />
                 <span>Profile</span>
               </DropdownMenuItem>
@@ -114,12 +123,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <span>Settings</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem className="text-red-600 focus:bg-red-50 dark:focus:bg-red-900 cursor-pointer">
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          <ProfileDialog
+            open={profileDialogOpen}
+            onOpenChange={setProfileDialogOpen}
+          />
         </div>
       </header>
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</div>
