@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { getUserInfo } from "@/services/auth.services";
 import { LogOut, Moon, Settings, Sun, User } from "lucide-react";
 import { useTheme } from "next-themes";
 import { usePathname } from "next/navigation";
@@ -47,6 +48,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { setTheme, theme } = useTheme();
   const pathname = usePathname();
   const currentPage = routeLabels[pathname] || "Dashboard";
+
+  const userInfo = getUserInfo();
 
   return (
     <SidebarInset>
