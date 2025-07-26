@@ -29,6 +29,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { getUserInfo } from "@/services/auth.services";
 
 const navigationItems = [
   {
@@ -85,6 +86,7 @@ const navigationItems = [
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
+  const userInfo = getUserInfo();
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -143,8 +145,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <AvatarFallback className="rounded-lg">AD</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">Admin User</span>
-                  <span className="truncate text-xs">admin@jobportal.com</span>
+                  <span className="truncate font-semibold">
+                    {userInfo?.name}
+                  </span>
+                  <span className="truncate text-xs">{userInfo?.email}</span>
                 </div>
               </div>
             </SidebarMenuButton>

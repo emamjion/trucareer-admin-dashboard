@@ -10,11 +10,13 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { toast } from "@/hooks/use-toast";
 import { loginAdmin } from "@/services/actions/loginAdmin";
-import { storeUserInfo } from "@/services/auth.services";
+import { getUserInfo, storeUserInfo } from "@/services/auth.services";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -32,6 +34,7 @@ export type LoginFormData = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const {
     register,
@@ -54,6 +57,22 @@ export default function LoginPage() {
       const res = await loginAdmin(adminData);
       if (res?.token) {
         storeUserInfo({ token: res?.token });
+        const userInfo = await getUserInfo();
+
+        if (userInfo?.role === "admin") {
+          toast({
+            title: "Login Successful!",
+            description: "Welcome back to Admin Dashboard",
+          });
+          router.push("/dashboard");
+        } else {
+          toast({
+            title: "Access Denied",
+            description: "You are not an admin user.",
+            variant: "destructive",
+          });
+          router.push("/unauthorized"); // Or just stay at /
+        }
       }
       console.log("data: ", res);
     } catch (error) {

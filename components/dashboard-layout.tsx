@@ -96,9 +96,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">Admin User</p>
+                  <p className="text-sm font-medium leading-none">
+                    {userInfo?.name}
+                  </p>
                   <p className="text-xs leading-none text-muted-foreground">
-                    admin@jobportal.com
+                    {userInfo?.email}
                   </p>
                 </div>
               </DropdownMenuLabel>
