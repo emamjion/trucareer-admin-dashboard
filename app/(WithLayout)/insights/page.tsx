@@ -4,14 +4,25 @@ import { DashboardLayout } from "@/components/dashboard-layout";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -32,6 +43,7 @@ import {
   Building2,
   Calendar,
   Download,
+  Edit,
   Eye,
   Filter,
   GraduationCap,
@@ -39,10 +51,12 @@ import {
   IndianRupee,
   List,
   MapPin,
+  MoreHorizontal,
   Search,
+  Trash2,
   TrendingUp,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -55,128 +69,57 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { toast } from "sonner";
 import { SalaryEntryDialog } from "./components/SalaryEntryDialog";
 
+const API_URL = `${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/salaries`;
 
-const dummyData = [
-  {
-    id: 1,
-    designation: "Software Engineer",
-    company: "Tech Corp",
-    location: "Bangalore",
-    experience: 3,
-    qualification: "B.Tech",
-    department: "Engineering",
-    industry: "IT",
-    jobLevel: "Mid",
-    employmentType: "Full-time",
-    baseSalary: 10,
-    bonus: 2,
-    stockOptions: 1,
-    year: "2024",
-    companySize: "1000+",
-    skills: ["React", "Node.js", "Python"],
-  },
-  {
-    id: 2,
-    designation: "Product Manager",
-    company: "InnoWare",
-    location: "Mumbai",
-    experience: 5,
-    qualification: "MBA",
-    department: "Product",
-    industry: "SaaS",
-    jobLevel: "Senior",
-    employmentType: "Full-time",
-    baseSalary: 18,
-    bonus: 4,
-    stockOptions: 2,
-    year: "2023",
-    companySize: "500-1000",
-    skills: ["Strategy", "Analytics", "Leadership"],
-  },
-  {
-    id: 3,
-    designation: "Data Scientist",
-    company: "DataTech",
-    location: "Hyderabad",
-    experience: 4,
-    qualification: "M.Tech",
-    department: "Data Science",
-    industry: "Analytics",
-    jobLevel: "Senior",
-    employmentType: "Full-time",
-    baseSalary: 15,
-    bonus: 3,
-    stockOptions: 1.5,
-    year: "2024",
-    companySize: "100-500",
-    skills: ["Python", "ML", "SQL"],
-  },
-  {
-    id: 4,
-    designation: "Frontend Developer",
-    company: "WebSolutions",
-    location: "Pune",
-    experience: 2,
-    qualification: "B.Tech",
-    department: "Engineering",
-    industry: "IT",
-    jobLevel: "Mid",
-    employmentType: "Full-time",
-    baseSalary: 8,
-    bonus: 1,
-    stockOptions: 0.5,
-    year: "2024",
-    companySize: "50-100",
-    skills: ["React", "TypeScript", "CSS"],
-  },
-];
-
-const salaryByExperience = [
-  { experience: "0-1", avgSalary: 6 },
-  { experience: "1-3", avgSalary: 9 },
-  { experience: "3-5", avgSalary: 15 },
-  { experience: "5-7", avgSalary: 22 },
-  { experience: "7-10", avgSalary: 30 },
-  { experience: "10+", avgSalary: 40 },
-];
-
-const salaryByLocation = [
-  { name: "Bangalore", value: 35, color: "#0088FE" },
-  { name: "Mumbai", value: 25, color: "#00C49F" },
-  { name: "Hyderabad", value: 20, color: "#FFBB28" },
-  { name: "Pune", value: 15, color: "#FF8042" },
-  { name: "Others", value: 5, color: "#8884D8" },
-];
+type ExperienceSalary = {
+  experience: string;
+  avgSalary: number;
+  count: number;
+};
 
 export default function SalaryInsightsPage() {
+  const [salaryData, setSalaryData] = useState<any[]>([]);
   const [filter, setFilter] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [locationFilter, setLocationFilter] = useState("all");
   const [experienceFilter, setExperienceFilter] = useState("all");
   const [levelFilter, setLevelFilter] = useState("all");
+  const [loading, setLoading] = useState(true);
+  const [openViewDialog, setOpenViewDialog] = useState(false);
+  const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [selectedSalary, setSelectedSalary] = useState<any>(null);
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
-  const filtered = dummyData.filter((item) => {
-    const matchesSearch =
-      item.designation.toLowerCase().includes(filter.toLowerCase()) ||
-      item.company.toLowerCase().includes(filter.toLowerCase());
-    const matchesLocation =
-      locationFilter === "all" || item.location === locationFilter;
-    const matchesExperience =
-      experienceFilter === "all" ||
-      (experienceFilter === "0-2" && item.experience <= 2) ||
-      (experienceFilter === "3-5" &&
-        item.experience >= 3 &&
-        item.experience <= 5) ||
-      (experienceFilter === "5+" && item.experience > 5);
-    const matchesLevel = levelFilter === "all" || item.jobLevel === levelFilter;
+  const fetchSalaries = async () => {
+    if (!token) return;
+    setLoading(true);
+    try {
+      const res = await fetch(API_URL, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success) setSalaryData(data.data);
+      else toast.error("Failed to fetch salaries.");
+    } catch (err) {
+      console.error(err);
+      toast.error("Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return (
-      matchesSearch && matchesLocation && matchesExperience && matchesLevel
-    );
-  });
+  useEffect(() => {
+    fetchSalaries();
+  }, []);
 
+  // -------------------
+  // HELPERS
+  // -------------------
   const getJobLevelColor = (level: string) => {
     switch (level) {
       case "Entry":
@@ -193,8 +136,173 @@ export default function SalaryInsightsPage() {
   };
 
   const getTotalCTC = (item: any) => {
-    return item.baseSalary + (item.bonus ?? 0) + (item.stockOptions ?? 0);
+    const monthly = Number(item?.totalMonthly ?? 0);
+    return parseFloat(((monthly * 12) / 100000).toFixed(2));
   };
+
+  // Filtered Data
+  const filtered = salaryData.filter((item) => {
+    const matchesSearch =
+      item.designation.toLowerCase().includes(filter.toLowerCase()) ||
+      item.companyName.toLowerCase().includes(filter.toLowerCase());
+    const matchesLocation =
+      locationFilter === "all" || item.location === locationFilter;
+    const matchesExperience =
+      experienceFilter === "all" ||
+      (experienceFilter === "0-2" && Number(item.experience) <= 2) ||
+      (experienceFilter === "3-5" &&
+        Number(item.experience) >= 3 &&
+        Number(item.experience) <= 5) ||
+      (experienceFilter === "5+" && Number(item.experience) > 5);
+    const matchesLevel =
+      levelFilter === "all" || item.experienceLevel === levelFilter;
+
+    return (
+      matchesSearch && matchesLocation && matchesExperience && matchesLevel
+    );
+  });
+
+  // -------------------
+  // CSV EXPORT
+  // -------------------
+  const exportCSV = () => {
+    const headers = [
+      "Designation",
+      "Company",
+      "Location",
+      "Experience",
+      "Level",
+      "CTC (LPA)",
+      "Year",
+      "Department",
+      "Employment Type",
+    ];
+    const rows = salaryData.map((item) => [
+      item.designation,
+      item.companyName,
+      item.location,
+      item.experience,
+      item.experienceLevel,
+      getTotalCTC(item),
+      item.whichYearsSalary,
+      item.department,
+      item.employmentType,
+    ]);
+
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [headers, ...rows].map((e) => e.join(",")).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "salary_data.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // -------------------
+  // MODAL ACTIONS
+  // -------------------
+  const handleView = (entry: any) => {
+    setSelectedSalary(entry);
+    setOpenViewDialog(true);
+  };
+
+  const handleEdit = (entry: any) => {
+    setSelectedSalary(entry);
+    setOpenEditDialog(true);
+  };
+
+  const saveEdit = async () => {
+    if (!selectedSalary || !token) return;
+    try {
+      const res = await fetch(`${API_URL}/${selectedSalary._id}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(selectedSalary),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Salary updated successfully!");
+        fetchSalaries();
+      } else toast.error("Failed to update salary.");
+    } catch (err) {
+      console.error(err);
+      toast.error("Something went wrong.");
+    } finally {
+      setOpenEditDialog(false);
+    }
+  };
+
+  const handleDelete = (entry: any) => {
+    setSelectedSalary(entry);
+    setOpenDeleteDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedSalary || !token) return;
+    try {
+      const res = await fetch(`${API_URL}/${selectedSalary._id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Salary deleted successfully!");
+        fetchSalaries();
+      } else toast.error("Failed to delete salary.");
+    } catch (err) {
+      console.error(err);
+      toast.error("Something went wrong.");
+    } finally {
+      setOpenDeleteDialog(false);
+    }
+  };
+
+  // -------------------
+  // CHARTS
+  // -------------------
+  const salaryByExperience: ExperienceSalary[] = [
+    { experience: "0-1", avgSalary: 0, count: 0 },
+    { experience: "1-3", avgSalary: 0, count: 0 },
+    { experience: "3-5", avgSalary: 0, count: 0 },
+    { experience: "5-7", avgSalary: 0, count: 0 },
+    { experience: "7-10", avgSalary: 0, count: 0 },
+    { experience: "10+", avgSalary: 0, count: 0 },
+  ];
+
+  const salaryByLocation: { name: string; value: number; color: string }[] = [];
+
+  salaryData.forEach((item) => {
+    const exp = Number(item.experience);
+    if (exp <= 1) salaryByExperience[0].avgSalary += getTotalCTC(item);
+    else if (exp <= 3) salaryByExperience[1].avgSalary += getTotalCTC(item);
+    else if (exp <= 5) salaryByExperience[2].avgSalary += getTotalCTC(item);
+    else if (exp <= 7) salaryByExperience[3].avgSalary += getTotalCTC(item);
+    else if (exp <= 10) salaryByExperience[4].avgSalary += getTotalCTC(item);
+    else salaryByExperience[5].avgSalary += getTotalCTC(item);
+
+    const locIndex = salaryByLocation.findIndex(
+      (l) => l.name === item.location
+    );
+    if (locIndex >= 0) salaryByLocation[locIndex].value += 1;
+    else
+      salaryByLocation.push({
+        name: item.location,
+        value: 1,
+        color: "#" + Math.floor(Math.random() * 16777215).toString(16),
+      });
+  });
+
+  salaryByExperience.forEach((item) => {
+    if (item.count > 0)
+      item.avgSalary = parseFloat((item.avgSalary / item.count).toFixed(1));
+  });
 
   return (
     <DashboardLayout>
@@ -205,15 +313,10 @@ export default function SalaryInsightsPage() {
             <h2 className="text-3xl font-bold tracking-tight">
               Salary Insights
             </h2>
-            <p className="text-muted-foreground">
-              Explore salary data across different roles, companies, and
-              locations
-            </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm">
-              <Download className="mr-2 h-4 w-4" />
-              Export
+            <Button variant="outline" size="sm" onClick={exportCSV}>
+              <Download className="mr-2 h-4 w-4" /> Export
             </Button>
             <SalaryEntryDialog />
           </div>
@@ -229,24 +332,31 @@ export default function SalaryInsightsPage() {
               <Briefcase className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{dummyData.length}</div>
-              <p className="text-xs text-muted-foreground">
-                +12% from last month
-              </p>
+              <div className="text-2xl font-bold">{salaryData.length}</div>
             </CardContent>
           </Card>
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Avg Salary</CardTitle>
               <IndianRupee className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">₹12.8 LPA</div>
-              <p className="text-xs text-muted-foreground">
-                +8% from last year
-              </p>
+              <div className="text-2xl font-bold">
+                ₹
+                {salaryData.length
+                  ? (
+                      salaryData.reduce(
+                        (acc, item) => acc + getTotalCTC(item),
+                        0
+                      ) / salaryData.length
+                    ).toFixed(1)
+                  : 0}{" "}
+                LPA
+              </div>
             </CardContent>
           </Card>
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -255,12 +365,20 @@ export default function SalaryInsightsPage() {
               <MapPin className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">Bangalore</div>
-              <p className="text-xs text-muted-foreground">
-                35% of all entries
-              </p>
+              {salaryByLocation.length > 0 ? (
+                <div className="text-2xl font-bold">
+                  {
+                    salaryByLocation.reduce((a, b) =>
+                      a.value > b.value ? a : b
+                    ).name
+                  }
+                </div>
+              ) : (
+                <div className="text-2xl font-bold">-</div>
+              )}
             </CardContent>
           </Card>
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Growth Rate</CardTitle>
@@ -268,7 +386,6 @@ export default function SalaryInsightsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">+15%</div>
-              <p className="text-xs text-muted-foreground">YoY salary growth</p>
             </CardContent>
           </Card>
         </div>
@@ -278,9 +395,6 @@ export default function SalaryInsightsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Salary by Experience</CardTitle>
-              <CardDescription>
-                Average salary progression with experience
-              </CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -288,9 +402,7 @@ export default function SalaryInsightsPage() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="experience" />
                   <YAxis />
-                  <Tooltip
-                    formatter={(value) => [`₹${value} LPA`, "Average Salary"]}
-                  />
+                  <Tooltip formatter={(value) => [`₹${value} LPA`]} />
                   <Bar dataKey="avgSalary" fill="#8884d8" />
                 </BarChart>
               </ResponsiveContainer>
@@ -300,7 +412,6 @@ export default function SalaryInsightsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Salary Distribution by Location</CardTitle>
-              <CardDescription>Percentage of entries by city</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -318,7 +429,7 @@ export default function SalaryInsightsPage() {
                     dataKey="value"
                   >
                     {salaryByLocation.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+                      <Cell key={index} fill={entry.color} />
                     ))}
                   </Pie>
                   <Tooltip />
@@ -328,7 +439,7 @@ export default function SalaryInsightsPage() {
           </Card>
         </div>
 
-        {/* Filters and Search */}
+        {/* Filters & Search */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -338,16 +449,14 @@ export default function SalaryInsightsPage() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search designation or company..."
-                    value={filter}
-                    onChange={(e) => setFilter(e.target.value)}
-                    className="pl-8"
-                  />
-                </div>
+              <div className="flex-1 relative">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search designation or company..."
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value)}
+                  className="pl-8"
+                />
               </div>
               <Select value={locationFilter} onValueChange={setLocationFilter}>
                 <SelectTrigger className="w-[150px]">
@@ -355,12 +464,16 @@ export default function SalaryInsightsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Locations</SelectItem>
-                  <SelectItem value="Bangalore">Bangalore</SelectItem>
-                  <SelectItem value="Mumbai">Mumbai</SelectItem>
-                  <SelectItem value="Hyderabad">Hyderabad</SelectItem>
-                  <SelectItem value="Pune">Pune</SelectItem>
+                  {Array.from(new Set(salaryData.map((d) => d.location))).map(
+                    (loc) => (
+                      <SelectItem key={loc} value={loc}>
+                        {loc}
+                      </SelectItem>
+                    )
+                  )}
                 </SelectContent>
               </Select>
+
               <Select
                 value={experienceFilter}
                 onValueChange={setExperienceFilter}
@@ -375,6 +488,7 @@ export default function SalaryInsightsPage() {
                   <SelectItem value="5+">5+ years</SelectItem>
                 </SelectContent>
               </Select>
+
               <Select value={levelFilter} onValueChange={setLevelFilter}>
                 <SelectTrigger className="w-[150px]">
                   <SelectValue placeholder="Level" />
@@ -387,6 +501,7 @@ export default function SalaryInsightsPage() {
                   <SelectItem value="Lead">Lead</SelectItem>
                 </SelectContent>
               </Select>
+
               <div className="flex gap-2">
                 <Button
                   variant={viewMode === "grid" ? "default" : "outline"}
@@ -411,18 +526,15 @@ export default function SalaryInsightsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Salary Data ({filtered.length} entries)</CardTitle>
-            <CardDescription>
-              {viewMode === "grid"
-                ? "Card view of salary entries"
-                : "Table view of salary entries"}
-            </CardDescription>
           </CardHeader>
           <CardContent>
-            {viewMode === "grid" ? (
+            {loading ? (
+              <p>Loading...</p>
+            ) : viewMode === "grid" ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filtered.map((entry) => (
                   <Card
-                    key={entry.id}
+                    key={entry._id}
                     className="hover:shadow-md transition-shadow"
                   >
                     <CardHeader className="pb-3">
@@ -430,7 +542,7 @@ export default function SalaryInsightsPage() {
                         <div className="flex items-center gap-3">
                           <Avatar className="h-10 w-10">
                             <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                              {entry.company.substring(0, 2).toUpperCase()}
+                              {entry.companyName.substring(0, 2).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
                           <div>
@@ -439,12 +551,14 @@ export default function SalaryInsightsPage() {
                             </CardTitle>
                             <p className="text-sm text-muted-foreground flex items-center gap-1">
                               <Building2 className="h-3 w-3" />
-                              {entry.company}
+                              {entry.companyName}
                             </p>
                           </div>
                         </div>
-                        <Badge className={getJobLevelColor(entry.jobLevel)}>
-                          {entry.jobLevel}
+                        <Badge
+                          className={getJobLevelColor(entry.experienceLevel)}
+                        >
+                          {entry.experienceLevel}
                         </Badge>
                       </div>
                     </CardHeader>
@@ -460,61 +574,20 @@ export default function SalaryInsightsPage() {
                         </div>
                         <div className="flex items-center gap-2">
                           <GraduationCap className="h-4 w-4 text-muted-foreground" />
-                          <span>{entry.qualification}</span>
+                          <span>{entry.department}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <span>{entry.year}</span>
+                          <span>{entry.whichYearsSalary}</span>
                         </div>
                       </div>
-
-                      <div className="border-t pt-3">
-                        <div className="grid grid-cols-3 gap-2 text-center">
-                          <div>
-                            <p className="text-xs text-muted-foreground">
-                              Base
-                            </p>
-                            <p className="font-semibold">
-                              ₹{entry.baseSalary}L
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-muted-foreground">
-                              Bonus
-                            </p>
-                            <p className="font-semibold">
-                              ₹{entry.bonus ?? 0}L
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-muted-foreground">
-                              Stock
-                            </p>
-                            <p className="font-semibold">
-                              ₹{entry.stockOptions ?? 0}L
-                            </p>
-                          </div>
-                        </div>
-                        <div className="mt-3 p-2 bg-primary/5 rounded-lg text-center">
-                          <p className="text-xs text-muted-foreground">
-                            Total CTC
-                          </p>
-                          <p className="text-xl font-bold text-primary">
-                            ₹{getTotalCTC(entry)} LPA
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap gap-1">
-                        {entry.skills.slice(0, 3).map((skill, idx) => (
-                          <Badge
-                            key={idx}
-                            variant="secondary"
-                            className="text-xs"
-                          >
-                            {skill}
-                          </Badge>
-                        ))}
+                      <div className="mt-3 p-2 bg-primary/5 rounded-lg text-center">
+                        <p className="text-xs text-muted-foreground">
+                          Total CTC
+                        </p>
+                        <p className="text-xl font-bold text-primary">
+                          ${getTotalCTC(entry)} LPA
+                        </p>
                       </div>
                     </CardContent>
                   </Card>
@@ -530,58 +603,55 @@ export default function SalaryInsightsPage() {
                       <TableHead>Location</TableHead>
                       <TableHead>Exp</TableHead>
                       <TableHead>Level</TableHead>
-                      <TableHead>Base</TableHead>
-                      <TableHead>Bonus</TableHead>
-                      <TableHead>Stock</TableHead>
                       <TableHead>CTC</TableHead>
                       <TableHead>Year</TableHead>
-                      <TableHead></TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filtered.map((entry) => (
-                      <TableRow key={entry.id} className="hover:bg-muted/50">
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">{entry.designation}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {entry.department}
-                            </p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-6 w-6">
-                              <AvatarFallback className="text-xs">
-                                {entry.company.substring(0, 2).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            {entry.company}
-                          </div>
-                        </TableCell>
+                      <TableRow key={entry._id} className="hover:bg-muted/50">
+                        <TableCell>{entry.designation}</TableCell>
+                        <TableCell>{entry.companyName}</TableCell>
                         <TableCell>{entry.location}</TableCell>
                         <TableCell>{entry.experience}y</TableCell>
                         <TableCell>
                           <Badge
-                            className={getJobLevelColor(entry.jobLevel)}
-                            variant="secondary"
+                            className={getJobLevelColor(entry.experienceLevel)}
                           >
-                            {entry.jobLevel}
+                            {entry.experienceLevel}
                           </Badge>
                         </TableCell>
-                        <TableCell>₹{entry.baseSalary}L</TableCell>
-                        <TableCell>₹{entry.bonus ?? 0}L</TableCell>
-                        <TableCell>₹{entry.stockOptions ?? 0}L</TableCell>
-                        <TableCell>
-                          <span className="font-semibold text-primary">
-                            ₹{getTotalCTC(entry)}L
-                          </span>
-                        </TableCell>
-                        <TableCell>{entry.year}</TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="sm">
-                            <Eye className="h-4 w-4" />
-                          </Button>
+                        <TableCell>₹{getTotalCTC(entry)}L</TableCell>
+                        <TableCell>{entry.whichYearsSalary}</TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuItem
+                                onClick={() => handleView(entry)}
+                              >
+                                <Eye className="mr-2 h-4 w-4" /> View
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleEdit(entry)}
+                              >
+                                <Edit className="mr-2 h-4 w-4" /> Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-red-600"
+                                onClick={() => handleDelete(entry)}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" /> Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -591,6 +661,296 @@ export default function SalaryInsightsPage() {
             )}
           </CardContent>
         </Card>
+
+        <Dialog open={openViewDialog} onOpenChange={setOpenViewDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Salary Details</DialogTitle>
+            </DialogHeader>
+            {selectedSalary && (
+              <div className="space-y-2 text-sm">
+                <p>
+                  <strong>Designation:</strong> {selectedSalary.designation}
+                </p>
+                <p>
+                  <strong>Company:</strong> {selectedSalary.companyName}
+                </p>
+                <p>
+                  <strong>CTC:</strong> ₹{getTotalCTC(selectedSalary)} LPA
+                </p>
+                <p>
+                  <strong>Location:</strong> {selectedSalary.location}
+                </p>
+                <p>
+                  <strong>Experience:</strong> {selectedSalary.experience} yrs
+                </p>
+                <p>
+                  <strong>Level:</strong> {selectedSalary.experienceLevel}
+                </p>
+                <p>
+                  <strong>Department:</strong> {selectedSalary.department}
+                </p>
+                <p>
+                  <strong>Year:</strong> {selectedSalary.whichYearsSalary}
+                </p>
+                <p>
+                  <strong>Employment Type:</strong>{" "}
+                  {selectedSalary.employmentType}
+                </p>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Modal */}
+        <Dialog open={openEditDialog} onOpenChange={setOpenEditDialog}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Edit Salary Entry</DialogTitle>
+              <DialogDescription>
+                Update the salary information carefully
+              </DialogDescription>
+            </DialogHeader>
+
+            {selectedSalary && (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  saveEdit();
+                }}
+              >
+                <div className="grid gap-4 py-4">
+                  {/* Designation & Company */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Designation</Label>
+                      <Input
+                        value={selectedSalary.designation}
+                        onChange={(e) =>
+                          setSelectedSalary({
+                            ...selectedSalary,
+                            designation: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Company</Label>
+                      <Input
+                        value={selectedSalary.companyName}
+                        onChange={(e) =>
+                          setSelectedSalary({
+                            ...selectedSalary,
+                            companyName: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  {/* Location & Experience */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Location</Label>
+                      <Input
+                        value={selectedSalary.location}
+                        onChange={(e) =>
+                          setSelectedSalary({
+                            ...selectedSalary,
+                            location: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Experience (Years)</Label>
+                      <Input
+                        type="number"
+                        value={selectedSalary.experience}
+                        onChange={(e) =>
+                          setSelectedSalary({
+                            ...selectedSalary,
+                            experience: Number(e.target.value),
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  {/* Experience Level & Department */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Experience Level</Label>
+                      <Select
+                        value={selectedSalary.experienceLevel}
+                        onValueChange={(val) =>
+                          setSelectedSalary({
+                            ...selectedSalary,
+                            experienceLevel: val,
+                          })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select level" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Entry">Entry</SelectItem>
+                          <SelectItem value="Mid">Mid</SelectItem>
+                          <SelectItem value="Senior">Senior</SelectItem>
+                          <SelectItem value="Lead">Lead</SelectItem>
+                          <SelectItem value="Manager">Manager</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Department</Label>
+                      <Input
+                        value={selectedSalary.department}
+                        onChange={(e) =>
+                          setSelectedSalary({
+                            ...selectedSalary,
+                            department: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  {/* Salary / Year / Increment */}
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label>Monthly Salary (BDT)</Label>
+                      <Input
+                        type="number"
+                        value={selectedSalary.totalMonthly}
+                        onChange={(e) =>
+                          setSelectedSalary({
+                            ...selectedSalary,
+                            totalMonthly: Number(e.target.value),
+                          })
+                        }
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Salary Year</Label>
+                      <Input
+                        type="number"
+                        value={selectedSalary.whichYearsSalary}
+                        onChange={(e) =>
+                          setSelectedSalary({
+                            ...selectedSalary,
+                            whichYearsSalary: Number(e.target.value),
+                          })
+                        }
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Minimum Increment (%)</Label>
+                      <Input
+                        type="number"
+                        value={selectedSalary.minimumIncrement}
+                        onChange={(e) =>
+                          setSelectedSalary({
+                            ...selectedSalary,
+                            minimumIncrement: Number(e.target.value),
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  {/* Gender & Employment Type */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Gender</Label>
+                      <Select
+                        value={selectedSalary.gender}
+                        onValueChange={(val) =>
+                          setSelectedSalary({
+                            ...selectedSalary,
+                            gender: val,
+                          })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select gender" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Male">Male</SelectItem>
+                          <SelectItem value="Female">Female</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Employment Type</Label>
+                      <Select
+                        value={selectedSalary.employmentType}
+                        onValueChange={(val) =>
+                          setSelectedSalary({
+                            ...selectedSalary,
+                            employmentType: val,
+                          })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Full-time">Full-time</SelectItem>
+                          <SelectItem value="Part-time">Part-time</SelectItem>
+                          <SelectItem value="Contract">Contract</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setOpenEditDialog(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit">Update Salary</Button>
+                </DialogFooter>
+              </form>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Modal */}
+        <Dialog open={openDeleteDialog} onOpenChange={setOpenDeleteDialog}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Confirm Delete</DialogTitle>
+            </DialogHeader>
+            <p>
+              Are you sure you want to delete{" "}
+              <strong>{selectedSalary?.designation}</strong> from{" "}
+              <strong>{selectedSalary?.companyName}</strong>?
+            </p>
+            <div className="flex justify-end gap-2 mt-4">
+              <Button
+                variant="outline"
+                onClick={() => setOpenDeleteDialog(false)}
+              >
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={confirmDelete}>
+                Delete
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );
