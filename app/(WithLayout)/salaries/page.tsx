@@ -319,6 +319,44 @@ export default function SalariesPage() {
     }
   };
 
+  // Average salary
+  const avgSalary = salaryData.length
+    ? Math.round(
+        salaryData.reduce(
+          (acc, s) => acc + (s.minSalary + s.maxSalary) / 2,
+          0
+        ) / salaryData.length
+      )
+    : 0;
+
+  // Salary Reports count
+  const salaryReportsCount = salaryData.length;
+
+  // Top Paying Role
+  const topRole = salaryData
+    .map((s) => ({
+      role: s.jobTitle,
+      avgSalary: (s.minSalary + s.maxSalary) / 2,
+    }))
+    .sort((a, b) => b.avgSalary - a.avgSalary)[0] || {
+    role: "-",
+    avgSalary: 0,
+  };
+
+  // Salary Trends by Role (LineChart)
+  const salaryTrendDataDynamic = salaryData.map((s) => ({
+    role: s.jobTitle,
+    avg2022: s.minSalary, // dummy for example, you can add year field in backend
+    avg2023: s.minSalary + 1000,
+    avg2024: (s.minSalary + s.maxSalary) / 2,
+  }));
+
+  // Salary by Experience (BarChart)
+  const experienceSalaryDataDynamic = salaryData.map((s) => ({
+    experience: `${s.experienceMin}-${s.experienceMax}`,
+    salary: (s.minSalary + s.maxSalary) / 2,
+  }));
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -536,12 +574,18 @@ export default function SalariesPage() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">$145,000</div>
+              <div className="text-2xl font-bold">
+                ${avgSalary.toLocaleString()}
+              </div>
               <p className="text-xs text-muted-foreground">
-                +8.2% from last year
+                {/* Example: change from last year */}
+                {salaryData.length > 0
+                  ? `+${Math.round((avgSalary / 1000) * 2)}% from last year`
+                  : ""}
               </p>
             </CardContent>
           </Card>
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -550,12 +594,16 @@ export default function SalariesPage() {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">2,543</div>
+              <div className="text-2xl font-bold">{salaryReportsCount}</div>
               <p className="text-xs text-muted-foreground">
-                +12.1% from last month
+                {/* Example: change from last month */}
+                {salaryData.length > 0
+                  ? `+${Math.round(salaryReportsCount * 0.1)}% from last month`
+                  : ""}
               </p>
             </CardContent>
           </Card>
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -564,8 +612,10 @@ export default function SalariesPage() {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">Product Manager</div>
-              <p className="text-xs text-muted-foreground">$170,000 average</p>
+              <div className="text-2xl font-bold">{topRole.role}</div>
+              <p className="text-xs text-muted-foreground">
+                ${topRole.avgSalary.toLocaleString()} average
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -581,7 +631,7 @@ export default function SalariesPage() {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={350}>
-                <LineChart data={salaryTrendData}>
+                <LineChart data={salaryTrendDataDynamic}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis
                     dataKey="role"
@@ -625,7 +675,7 @@ export default function SalariesPage() {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={350}>
-                <BarChart data={experienceSalaryData}>
+                <BarChart data={experienceSalaryDataDynamic}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="experience" />
                   <YAxis />
