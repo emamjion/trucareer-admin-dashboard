@@ -22,10 +22,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
-import { getUserInfo } from "@/services/auth.services";
+import { getUserInfo, removeUser } from "@/services/auth.services";
 import { LogOut, Moon, Settings, Sun, User } from "lucide-react";
 import { useTheme } from "next-themes";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { ProfileDialog } from "./ProfileDialog";
 
@@ -51,8 +51,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
   const currentPage = routeLabels[pathname] || "Dashboard";
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const router = useRouter();
 
   const userInfo = getUserInfo();
+
+  const handleLogout = () => {
+    removeUser();
+    router.push("/");
+  };
 
   return (
     <SidebarInset>
@@ -123,7 +129,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <span>Settings</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600 focus:bg-red-50 dark:focus:bg-red-900 cursor-pointer">
+              <DropdownMenuItem
+                className="text-red-600 focus:bg-red-50 dark:focus:bg-red-900 cursor-pointer"
+                onClick={handleLogout}
+              >
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>
               </DropdownMenuItem>

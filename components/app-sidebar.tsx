@@ -47,41 +47,41 @@ const navigationItems = [
     url: "/insights",
     icon: DollarSign,
   },
-  {
-    title: "Companies",
-    url: "/companies",
-    icon: Building2,
-  },
+  // {
+  //   title: "Companies",
+  //   url: "/companies",
+  //   icon: Building2,
+  // },
   {
     title: "Reviews",
     url: "/reviews",
     icon: Star,
   },
-  {
-    title: "Job Postings",
-    url: "/jobs",
-    icon: Briefcase,
-  },
-  {
-    title: "Interview Experiences",
-    url: "/interviews",
-    icon: MessageSquare,
-  },
-  {
-    title: "Browse Salaries",
-    url: "/salaries",
-    icon: DollarSign,
-  },
-  {
-    title: "Analytics",
-    url: "/analytics",
-    icon: BarChart3,
-  },
-  {
-    title: "Settings",
-    url: "/settings",
-    icon: Settings,
-  },
+  // {
+  //   title: "Job Postings",
+  //   url: "/jobs",
+  //   icon: Briefcase,
+  // },
+  // {
+  //   title: "Interview Experiences",
+  //   url: "/interviews",
+  //   icon: MessageSquare,
+  // },
+  // {
+  //   title: "Browse Salaries",
+  //   url: "/salaries",
+  //   icon: DollarSign,
+  // },
+  // {
+  //   title: "Analytics",
+  //   url: "/analytics",
+  //   icon: BarChart3,
+  // },
+  // {
+  //   title: "Settings",
+  //   url: "/settings",
+  //   icon: Settings,
+  // },
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {

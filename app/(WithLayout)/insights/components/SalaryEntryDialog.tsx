@@ -41,7 +41,11 @@ type SalaryData = {
   isVerified: boolean;
 };
 
-export function SalaryEntryDialog() {
+interface SalaryEntryDialogProps {
+  onSuccess?: () => void;
+}
+
+export function SalaryEntryDialog({ onSuccess }: SalaryEntryDialogProps) {
   const [open, setOpen] = useState(false);
   const [salaryData, setSalaryData] = useState<SalaryData>({
     companyName: "",
@@ -79,7 +83,11 @@ export function SalaryEntryDialog() {
       if (!res.ok || !data.success)
         throw new Error(data.message || "Failed to create salary data");
 
-      toast.success(data.message);
+      if (data.success) {
+        toast.success("Salary added successfully!");
+        onSuccess?.();
+        setOpen(false);
+      }
 
       // reset form
       setSalaryData({

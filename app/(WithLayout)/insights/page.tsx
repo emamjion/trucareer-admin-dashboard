@@ -318,7 +318,7 @@ export default function SalaryInsightsPage() {
             <Button variant="outline" size="sm" onClick={exportCSV}>
               <Download className="mr-2 h-4 w-4" /> Export
             </Button>
-            <SalaryEntryDialog />
+            <SalaryEntryDialog onSuccess={fetchSalaries} />
           </div>
         </div>
 
@@ -343,7 +343,7 @@ export default function SalaryInsightsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                ₹
+                BDT{" "}
                 {salaryData.length
                   ? (
                       salaryData.reduce(
@@ -352,7 +352,7 @@ export default function SalaryInsightsPage() {
                       ) / salaryData.length
                     ).toFixed(1)
                   : 0}{" "}
-                LPA
+                Taka
               </div>
             </CardContent>
           </Card>
@@ -402,7 +402,7 @@ export default function SalaryInsightsPage() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="experience" />
                   <YAxis />
-                  <Tooltip formatter={(value) => [`₹${value} LPA`]} />
+                  <Tooltip formatter={(value) => [`BDT ${value} Taka`]} />
                   <Bar dataKey="avgSalary" fill="#8884d8" />
                 </BarChart>
               </ResponsiveContainer>
@@ -622,7 +622,7 @@ export default function SalaryInsightsPage() {
                             {entry.experienceLevel}
                           </Badge>
                         </TableCell>
-                        <TableCell>₹{getTotalCTC(entry)}L</TableCell>
+                        <TableCell>BDT{getTotalCTC(entry)}L</TableCell>
                         <TableCell>{entry.whichYearsSalary}</TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>
@@ -676,7 +676,7 @@ export default function SalaryInsightsPage() {
                   <strong>Company:</strong> {selectedSalary.companyName}
                 </p>
                 <p>
-                  <strong>CTC:</strong> ₹{getTotalCTC(selectedSalary)} LPA
+                  <strong>CTC:</strong> BDT {getTotalCTC(selectedSalary)} Taka
                 </p>
                 <p>
                   <strong>Location:</strong> {selectedSalary.location}
