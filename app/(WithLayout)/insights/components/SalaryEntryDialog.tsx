@@ -39,6 +39,7 @@ type SalaryData = {
   employmentType: string;
   department: string;
   isVerified: boolean;
+  type: string;
 };
 
 interface SalaryEntryDialogProps {
@@ -61,6 +62,7 @@ export function SalaryEntryDialog({ onSuccess }: SalaryEntryDialogProps) {
     employmentType: "",
     department: "",
     isVerified: false,
+    type: "salary",
   });
 
   const token =
@@ -104,6 +106,7 @@ export function SalaryEntryDialog({ onSuccess }: SalaryEntryDialogProps) {
         employmentType: "",
         department: "",
         isVerified: false,
+        type: "salary",
       });
       setOpen(false);
     } catch (err: any) {

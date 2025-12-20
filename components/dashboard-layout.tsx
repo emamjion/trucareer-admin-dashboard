@@ -39,7 +39,7 @@ const routeLabels: Record<string, string> = {
   "/insights": "Salary Insights",
   "/companies": "Companies",
   "/reviews": "Reviews",
-  "/jobs": "Job Postings",
+  "/stories": "Salary Stories",
   "/interviews": "Interview Experiences",
   "/salaries": "Browse Salaries",
   "/analytics": "Analytics",

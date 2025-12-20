@@ -1,13 +1,10 @@
 "use client";
 
 import {
-  BarChart3,
   Briefcase,
   Building2,
   DollarSign,
   LayoutDashboardIcon,
-  MessageSquare,
-  Settings,
   Star,
   Users,
 } from "lucide-react";
@@ -57,11 +54,11 @@ const navigationItems = [
     url: "/reviews",
     icon: Star,
   },
-  // {
-  //   title: "Job Postings",
-  //   url: "/jobs",
-  //   icon: Briefcase,
-  // },
+  {
+    title: "Salary Stories",
+    url: "/stories",
+    icon: Briefcase,
+  },
   // {
   //   title: "Interview Experiences",
   //   url: "/interviews",
@@ -139,7 +136,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <div className="flex items-center gap-2">
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage
-                    src={userInfo?.profileImg || "/placeholder.svg?height=32&width=32"}
+                    src={
+                      userInfo?.profileImg ||
+                      "/placeholder.svg?height=32&width=32"
+                    }
                     alt="Admin"
                   />
                   <AvatarFallback className="rounded-lg">AD</AvatarFallback>
@@ -148,7 +148,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <span className="truncate font-semibold">
                     {userInfo?.name}
                   </span>
-                  <span className="truncate text-xs">{userInfo?.email }</span>
+                  <span className="truncate text-xs">{userInfo?.email}</span>
                 </div>
               </div>
             </SidebarMenuButton>
