@@ -59,11 +59,16 @@ const navigationItems = [
     url: "/stories",
     icon: Briefcase,
   },
-  // {
-  //   title: "Interview Experiences",
-  //   url: "/interviews",
-  //   icon: MessageSquare,
-  // },
+  {
+    title: "Pending Salary Story",
+    url: "/pending",
+    icon: Briefcase,
+  },
+  {
+    title: "Rejected Salary Story",
+    url: "/rejected",
+    icon: Briefcase,
+  },
   // {
   //   title: "Browse Salaries",
   //   url: "/salaries",
