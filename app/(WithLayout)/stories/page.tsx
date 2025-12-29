@@ -38,6 +38,33 @@ export interface SalaryStory {
   isAnonymous: boolean;
 }
 
+const departments = [
+  "Executive Leadership",
+  "Administration",
+  "Human Resources (HR) & People Operations",
+  "Finance & Accounting",
+  "Information Technology (IT)",
+  "Engineering & Development",
+  "Product Development",
+  "Product Management",
+  "Operations",
+  "Business Development",
+  "Sales & Marketing",
+  "Customer Service & Support",
+  "Research & Development (R&D)",
+  "Legal & Compliance",
+  "Supply Chain & Procurement",
+  "Quality Assurance (QA)",
+  "Risk Management",
+  "Public Relations (PR) & Corporate Communications",
+  "Facilities & Maintenance",
+  "Logistics & Distribution",
+  "Data Science & Analytics",
+  "Design & User Experience (UX/UI)",
+  "Security (Physical & Cybersecurity)",
+  "Project Management",
+];
+
 export default function SalaryStoryPage() {
   const [stories, setStories] = useState<SalaryStory[]>([]);
   const [search, setSearch] = useState("");

@@ -39,6 +39,7 @@ interface Salary {
   pros?: string[];
   cons?: string[];
   isAnonymous: boolean;
+  isVerified: boolean;
   createdAt: string;
 }
 
@@ -51,6 +52,10 @@ export default function PendingSalaryPage() {
   const [selected, setSelected] = useState<Salary | null>(null);
   const [rejectId, setRejectId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [filterExperience, setFilterExperience] = useState("");
+  const [filterLocation, setFilterLocation] = useState("");
+  const [filterDepartment, setFilterDepartment] = useState("");
+  const [filterType, setFilterType] = useState("");
 
   const token =
     typeof window !== "undefined" ? localStorage.getItem("token") : null;
@@ -111,11 +116,34 @@ export default function PendingSalaryPage() {
   }, []);
 
   // 🔍 FILTER LOGIC (THIS IS THE MAIN PART)
-  const filteredData = data.filter((item) =>
-    `${item.companyName} ${item.designation} ${item.department}`
-      .toLowerCase()
-      .includes(search.toLowerCase())
-  );
+  const filteredData = data.filter((item) => {
+    const matchSearch =
+      `${item.companyName} ${item.designation} ${item.department}`
+        .toLowerCase()
+        .includes(search.toLowerCase());
+
+    const matchExperience = filterExperience
+      ? item.experienceLevel === filterExperience
+      : true;
+
+    const matchLocation = filterLocation
+      ? item.location.toLowerCase().includes(filterLocation.toLowerCase())
+      : true;
+
+    const matchDepartment = filterDepartment
+      ? item.department.toLowerCase().includes(filterDepartment.toLowerCase())
+      : true;
+
+    const matchType = filterType ? item.type === filterType : true;
+
+    return (
+      matchSearch &&
+      matchExperience &&
+      matchLocation &&
+      matchDepartment &&
+      matchType
+    );
+  });
 
   if (loading) return <p className="p-6">Loading...</p>;
 
@@ -124,14 +152,71 @@ export default function PendingSalaryPage() {
       <div className="p-6 space-y-6">
         <h1 className="text-2xl font-semibold">Pending Approval</h1>
 
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by company, designation, department..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          {/* SEARCH */}
+          <div className="relative w-full lg:max-w-md">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by company, designation, department..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+
+          {/* FILTERS */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full lg:max-w-3xl">
+            {/* TYPE */}
+            <select
+              className="border rounded-md px-3 py-2 text-sm bg-background"
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+            >
+              <option value="">All Types</option>
+              <option value="salary">Salary</option>
+              <option value="story">Story</option>
+            </select>
+
+            {/* EXPERIENCE */}
+            <select
+              className="border rounded-md px-3 py-2 text-sm bg-background"
+              value={filterExperience}
+              onChange={(e) => setFilterExperience(e.target.value)}
+            >
+              <option value="">All Experience</option>
+              <option value="Entry">Entry</option>
+              <option value="Mid">Mid</option>
+              <option value="Senior">Senior</option>
+            </select>
+
+            {/* LOCATION */}
+            <select
+              className="border rounded-md px-3 py-2 text-sm bg-background"
+              value={filterLocation}
+              onChange={(e) => setFilterLocation(e.target.value)}
+            >
+              <option value="">All Locations</option>
+              {[...new Set(data.map((i) => i.location))].map((loc) => (
+                <option key={loc} value={loc}>
+                  {loc}
+                </option>
+              ))}
+            </select>
+
+            {/* DEPARTMENT */}
+            <select
+              className="border rounded-md px-3 py-2 text-sm bg-background"
+              value={filterDepartment}
+              onChange={(e) => setFilterDepartment(e.target.value)}
+            >
+              <option value="">All Departments</option>
+              {[...new Set(data.map((i) => i.department))].map((dept) => (
+                <option key={dept} value={dept}>
+                  {dept}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -199,48 +284,115 @@ export default function PendingSalaryPage() {
           </DialogHeader>
 
           {selected && (
-            <div className="space-y-2 text-sm">
-              <p>
-                <b>Company:</b> {selected.companyName}
-              </p>
-              <p>
-                <b>Designation:</b> {selected.designation}
-              </p>
-              <p>
-                <b>Location:</b> {selected.location}
-              </p>
-              <p>
-                <b>Experience:</b> {selected.experienceLevel}
-              </p>
-              <p>
-                <b>Department:</b> {selected.department}
-              </p>
-              <p>
-                <b>Employment:</b> {selected.employmentType}
-              </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              {/* BASIC INFO */}
+              <div>
+                <p className="text-muted-foreground">Company</p>
+                <p className="font-medium">{selected.companyName}</p>
+              </div>
 
-              {selected.type === "salary" && (
+              <div>
+                <p className="text-muted-foreground">Designation</p>
+                <p className="font-medium">{selected.designation}</p>
+              </div>
+
+              <div>
+                <p className="text-muted-foreground">Location</p>
+                <p className="font-medium">{selected.location}</p>
+              </div>
+
+              <div>
+                <p className="text-muted-foreground">Department</p>
+                <p className="font-medium">{selected.department}</p>
+              </div>
+
+              <div>
+                <p className="text-muted-foreground">Employment Type</p>
+                <p className="font-medium">{selected.employmentType}</p>
+              </div>
+
+              <div>
+                <p className="text-muted-foreground">Experience Level</p>
+                <p className="font-medium">{selected.experienceLevel}</p>
+              </div>
+
+              <div>
+                <p className="text-muted-foreground">Experience (Years)</p>
+                <p className="font-medium">{selected.experience}</p>
+              </div>
+
+              <div>
+                <p className="text-muted-foreground">Gender</p>
+                <p className="font-medium">{selected.gender || "N/A"}</p>
+              </div>
+
+              {/* SALARY INFO */}
+              {selected.totalMonthly && (
                 <>
-                  <p>
-                    <b>Salary:</b> {selected.totalMonthly}
-                  </p>
-                  <p>
-                    <b>Year:</b> {selected.whichYearsSalary}
-                  </p>
-                  <p>
-                    <b>Increment:</b> {selected.minimumIncrement}%
-                  </p>
+                  <Separator className="col-span-2 my-2" />
+
+                  <div>
+                    <p className="text-muted-foreground">Monthly Salary</p>
+                    <p className="font-semibold text-green-600">
+                      ৳ {selected.totalMonthly.toLocaleString()}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-muted-foreground">Salary Year</p>
+                    <p className="font-medium">{selected.whichYearsSalary}</p>
+                  </div>
+
+                  <div>
+                    <p className="text-muted-foreground">Minimum Increment</p>
+                    <p className="font-medium">{selected.minimumIncrement}%</p>
+                  </div>
+
+                  <div>
+                    <p className="text-muted-foreground">Increment Year</p>
+                    <p className="font-medium">{selected.yearsOfIncrement}</p>
+                  </div>
                 </>
               )}
 
-              {selected.type === "story" && (
+              {/* STORY */}
+              {selected.storyDescription && (
                 <>
-                  <p>
-                    <b>Title:</b> {selected.storyTitle}
-                  </p>
-                  <p>{selected.storyDescription}</p>
+                  <Separator className="col-span-2 my-2" />
+                  <div className="col-span-2">
+                    <p className="text-muted-foreground mb-1">Story</p>
+                    <p className="leading-relaxed">
+                      {selected.storyDescription}
+                    </p>
+                  </div>
                 </>
               )}
+
+              {/* META */}
+              <Separator className="col-span-2 my-2" />
+
+              <div>
+                <p className="text-muted-foreground">Anonymous</p>
+                <Badge variant={selected.isAnonymous ? "secondary" : "outline"}>
+                  {selected.isAnonymous ? "Yes" : "No"}
+                </Badge>
+              </div>
+
+              <div>
+                <p className="text-muted-foreground">Verified</p>
+                <Badge
+                  variant={selected.isVerified ? "default" : "destructive"}
+                >
+                  {selected.isVerified ? "Verified" : "Not Verified"}
+                </Badge>
+              </div>
+
+              <div className="col-span-2">
+                <p className="text-muted-foreground">Submitted At</p>
+                <p className="font-medium">
+                  {new Date(selected.createdAt).toLocaleString()}
+                </p>
+              </div>
             </div>
           )}
         </DialogContent>

@@ -26,15 +26,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { Check, ChevronsUpDown } from "lucide-react";
 
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-const API_URL = `${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/create-salary`;
+const API_URL = `${process.env.NEXT_PUBLIC_BACKEND_URL}/admin/salaries`;
 
-interface AddSalaryStoryDialogProps {
+interface EditSalaryStoryDialogProps {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
+  storyData: any; // SalaryStory object
   onSuccess: () => void | Promise<void>;
 }
 
@@ -97,7 +98,6 @@ const experienceLevels = ["Entry", "Mid", "Senior", "Lead", "Manager"];
 const employmentTypes = ["Full-time", "Part-time", "Contract", "Internship"];
 const genders = ["Male", "Female", "Other", "Prefer not to say"];
 
-// 🔹 Reusable searchable combobox component
 const Combobox = ({
   label,
   value,
@@ -127,7 +127,7 @@ const Combobox = ({
             <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[--radix-popover-trigger-width] p-0 max-h-64 overflow-y-auto">
+        <PopoverContent className="w-full p-0">
           <Command>
             <CommandInput placeholder={`Search ${label}`} />
             <CommandEmpty>No option found.</CommandEmpty>
@@ -157,11 +157,12 @@ const Combobox = ({
   );
 };
 
-export default function AddSalaryStoryDialog({
+export default function EditSalaryStoryDialog({
   open,
   setOpen,
+  storyData,
   onSuccess,
-}: AddSalaryStoryDialogProps) {
+}: EditSalaryStoryDialogProps) {
   const {
     register,
     handleSubmit,
@@ -170,11 +171,12 @@ export default function AddSalaryStoryDialog({
     setValue,
     formState: { isSubmitting },
   } = useForm<SalaryStoryForm>({
-    defaultValues: {
-      isAnonymous: true,
-      minimumIncrement: 0,
-    },
+    defaultValues: storyData,
   });
+
+  useEffect(() => {
+    reset(storyData);
+  }, [storyData, reset]);
 
   const token =
     typeof window !== "undefined" ? localStorage.getItem("token") : null;
@@ -183,24 +185,23 @@ export default function AddSalaryStoryDialog({
     if (!token) return toast.error("Unauthorized");
 
     try {
-      const res = await fetch(API_URL, {
-        method: "POST",
+      const res = await fetch(`${API_URL}/${storyData._id}`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ ...values, type: "story" }),
+        body: JSON.stringify(values),
       });
 
       const data = await res.json();
 
       if (!data.success) {
-        toast.error(data.message || "Failed to add salary story");
+        toast.error(data.message || "Failed to update salary story");
         return;
       }
 
-      toast.success("Salary story added successfully");
-      reset();
+      toast.success("Salary story updated successfully");
       setOpen(false);
       await onSuccess();
     } catch {
@@ -212,7 +213,7 @@ export default function AddSalaryStoryDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add Salary Story</DialogTitle>
+          <DialogTitle>Edit Salary Story</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -230,7 +231,6 @@ export default function AddSalaryStoryDialog({
               <Label>Location</Label>
               <Input {...register("location", { required: true })} />
             </div>
-
             <Combobox
               label="Department"
               value={watch("department")}
@@ -337,7 +337,7 @@ export default function AddSalaryStoryDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Submitting..." : "Submit Story"}
+              {isSubmitting ? "Updating..." : "Update Story"}
             </Button>
           </div>
         </form>

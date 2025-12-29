@@ -6,6 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -24,6 +31,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -38,10 +50,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 import {
   Briefcase,
   Building2,
   Calendar,
+  Check,
+  ChevronsUpDown,
   Download,
   Edit,
   Eye,
@@ -80,6 +95,33 @@ type ExperienceSalary = {
   count: number;
 };
 
+const departments = [
+  "Executive Leadership",
+  "Administration",
+  "Human Resources (HR) & People Operations",
+  "Finance & Accounting",
+  "Information Technology (IT)",
+  "Engineering & Development",
+  "Product Development",
+  "Product Management",
+  "Operations",
+  "Business Development",
+  "Sales & Marketing",
+  "Customer Service & Support",
+  "Research & Development (R&D)",
+  "Legal & Compliance",
+  "Supply Chain & Procurement",
+  "Quality Assurance (QA)",
+  "Risk Management",
+  "Public Relations (PR) & Corporate Communications",
+  "Facilities & Maintenance",
+  "Logistics & Distribution",
+  "Data Science & Analytics",
+  "Design & User Experience (UX/UI)",
+  "Security (Physical & Cybersecurity)",
+  "Project Management",
+];
+
 export default function SalaryInsightsPage() {
   const [salaryData, setSalaryData] = useState<any[]>([]);
   const [filter, setFilter] = useState("");
@@ -117,6 +159,13 @@ export default function SalaryInsightsPage() {
     fetchSalaries();
   }, []);
 
+  const experienceYears = Array.from({ length: 16 }, (_, i) => i);
+
+  const currentYear = new Date().getFullYear();
+  const salaryYears = Array.from(
+    { length: currentYear - 2020 + 1 },
+    (_, i) => 2020 + i
+  );
   // -------------------
   // HELPERS
   // -------------------
@@ -663,40 +712,82 @@ export default function SalaryInsightsPage() {
         </Card>
 
         <Dialog open={openViewDialog} onOpenChange={setOpenViewDialog}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>Salary Details</DialogTitle>
+              <DialogDescription>
+                Complete salary information overview
+              </DialogDescription>
             </DialogHeader>
+
             {selectedSalary && (
-              <div className="space-y-2 text-sm">
-                <p>
-                  <strong>Designation:</strong> {selectedSalary.designation}
-                </p>
-                <p>
-                  <strong>Company:</strong> {selectedSalary.companyName}
-                </p>
-                <p>
-                  <strong>CTC:</strong> BDT {getTotalCTC(selectedSalary)} Taka
-                </p>
-                <p>
-                  <strong>Location:</strong> {selectedSalary.location}
-                </p>
-                <p>
-                  <strong>Experience:</strong> {selectedSalary.experience} yrs
-                </p>
-                <p>
-                  <strong>Level:</strong> {selectedSalary.experienceLevel}
-                </p>
-                <p>
-                  <strong>Department:</strong> {selectedSalary.department}
-                </p>
-                <p>
-                  <strong>Year:</strong> {selectedSalary.whichYearsSalary}
-                </p>
-                <p>
-                  <strong>Employment Type:</strong>{" "}
-                  {selectedSalary.employmentType}
-                </p>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-muted-foreground">Designation</p>
+                  <p className="font-medium">{selectedSalary.designation}</p>
+                </div>
+
+                <div>
+                  <p className="text-muted-foreground">Company</p>
+                  <p className="font-medium">{selectedSalary.companyName}</p>
+                </div>
+
+                <div>
+                  <p className="text-muted-foreground">Location</p>
+                  <p className="font-medium">{selectedSalary.location}</p>
+                </div>
+
+                <div>
+                  <p className="text-muted-foreground">Department</p>
+                  <p className="font-medium">{selectedSalary.department}</p>
+                </div>
+
+                <div>
+                  <p className="text-muted-foreground">Experience</p>
+                  <p className="font-medium">
+                    {selectedSalary.experience} years
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-muted-foreground">Experience Level</p>
+                  <Badge
+                    className={getJobLevelColor(selectedSalary.experienceLevel)}
+                  >
+                    {selectedSalary.experienceLevel}
+                  </Badge>
+                </div>
+
+                <div>
+                  <p className="text-muted-foreground">Employment Type</p>
+                  <p className="font-medium">{selectedSalary.employmentType}</p>
+                </div>
+
+                <div>
+                  <p className="text-muted-foreground">Gender</p>
+                  <p className="font-medium">{selectedSalary.gender}</p>
+                </div>
+
+                <div>
+                  <p className="text-muted-foreground">Salary Year</p>
+                  <p className="font-medium">
+                    {selectedSalary.whichYearsSalary}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-muted-foreground">Minimum Increment</p>
+                  <p className="font-medium">
+                    {selectedSalary.minimumIncrement}%
+                  </p>
+                </div>
+
+                <div className="col-span-2 bg-primary/5 p-3 rounded-lg text-center">
+                  <p className="text-xs text-muted-foreground">Total CTC</p>
+                  <p className="text-xl font-bold text-primary">
+                    BDT {getTotalCTC(selectedSalary)} LPA
+                  </p>
+                </div>
               </div>
             )}
           </DialogContent>
@@ -765,17 +856,46 @@ export default function SalaryInsightsPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Experience (Years)</Label>
-                      <Input
-                        type="number"
-                        value={selectedSalary.experience}
-                        onChange={(e) =>
-                          setSelectedSalary({
-                            ...selectedSalary,
-                            experience: Number(e.target.value),
-                          })
-                        }
-                      />
+                      <Label>Experience(Years)</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="w-full justify-between"
+                          >
+                            {selectedSalary.experience} Years
+                            <ChevronsUpDown className="h-4 w-4 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="p-0 max-h-60 overflow-y-auto">
+                          <Command>
+                            <CommandInput placeholder="Search experience..." />
+                            <CommandGroup>
+                              {experienceYears.map((year) => (
+                                <CommandItem
+                                  key={year}
+                                  onSelect={() =>
+                                    setSelectedSalary({
+                                      ...selectedSalary,
+                                      experience: year,
+                                    })
+                                  }
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      selectedSalary.experience === year
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    )}
+                                  />
+                                  {year} Years
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                     </div>
                   </div>
 
@@ -807,15 +927,46 @@ export default function SalaryInsightsPage() {
 
                     <div className="space-y-2">
                       <Label>Department</Label>
-                      <Input
-                        value={selectedSalary.department}
-                        onChange={(e) =>
-                          setSelectedSalary({
-                            ...selectedSalary,
-                            department: e.target.value,
-                          })
-                        }
-                      />
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="w-full justify-between"
+                          >
+                            {selectedSalary.department || "Select department"}
+                            <ChevronsUpDown className="h-4 w-4 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="p-0 max-h-64 overflow-y-auto">
+                          <Command>
+                            <CommandInput placeholder="Search department..." />
+                            <CommandEmpty>No department found</CommandEmpty>
+                            <CommandGroup>
+                              {departments.map((dept) => (
+                                <CommandItem
+                                  key={dept}
+                                  onSelect={() =>
+                                    setSelectedSalary({
+                                      ...selectedSalary,
+                                      department: dept,
+                                    })
+                                  }
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      selectedSalary.department === dept
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    )}
+                                  />
+                                  {dept}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                     </div>
                   </div>
 
@@ -837,16 +988,44 @@ export default function SalaryInsightsPage() {
 
                     <div className="space-y-2">
                       <Label>Salary Year</Label>
-                      <Input
-                        type="number"
-                        value={selectedSalary.whichYearsSalary}
-                        onChange={(e) =>
-                          setSelectedSalary({
-                            ...selectedSalary,
-                            whichYearsSalary: Number(e.target.value),
-                          })
-                        }
-                      />
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="w-full justify-between"
+                          >
+                            {selectedSalary.whichYearsSalary}
+                            <ChevronsUpDown className="h-4 w-4 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="p-0">
+                          <Command>
+                            <CommandGroup>
+                              {salaryYears.map((year) => (
+                                <CommandItem
+                                  key={year}
+                                  onSelect={() =>
+                                    setSelectedSalary({
+                                      ...selectedSalary,
+                                      whichYearsSalary: year,
+                                    })
+                                  }
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      selectedSalary.whichYearsSalary === year
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    )}
+                                  />
+                                  {year}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                     </div>
 
                     <div className="space-y-2">
